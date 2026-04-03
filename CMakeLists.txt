@@ -46,7 +46,14 @@ pico_enable_stdio_usb(PF 0)
 
 # Add the standard library to the build
 target_link_libraries(PF
-        pico_stdlib)
+        pico_stdlib
+        pico_stdlib          
+        hardware_pwm         
+        hardware_adc         
+        hardware_i2c         
+        hardware_irq         
+        hardware_timer       
+        )
 
 # Add the standard include files to the build
 target_include_directories(PF PRIVATE
@@ -60,6 +67,7 @@ target_link_libraries(PF
 target_sources(PF PRIVATE
     PF.c
     ssd1306.c
+    morse_decoder.c
 )
 
 pico_add_extra_outputs(PF)
