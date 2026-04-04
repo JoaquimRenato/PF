@@ -33,7 +33,7 @@ static const char ABC[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 
 static ssd1306_t disp;
 static char msg[MSG_MAX + 1] = "";
-static int  sel = 0;
+static int  seletor = 0;
 
 // Flags de evento (setadas pela IRQ, lidas no loop)
 static volatile bool ev_add  = false;  // Botão A pressionado
@@ -60,14 +60,14 @@ static void disp_update(void) {
     morse_symbol_t syms[MAX_SYMBOLS];
     uint8_t n = 0;
     char mstr[MAX_SYMBOLS + 1] = "---";
-    if (morse_encode(ABC[sel], syms, &n)) {
+    if (morse_encode(ABC[seletor], syms, &n)) {
         for (uint8_t i = 0; i < n; i++)
             mstr[i] = syms[i] == MORSE_DOT ? '.' : '-';
         mstr[n] = '\0';
     }
 
     char l1[24], l2[24];
-    snprintf(l1, sizeof(l1), "> %c  %s", ABC[sel], mstr);
+    snprintf(l1, sizeof(l1), "> %c  %s", ABC[seletor], mstr);
     snprintf(l2, sizeof(l2), "MSG:%s", msg);
 
     ssd1306_clear(&disp);
@@ -109,7 +109,7 @@ static void play(const char *s) {
     }
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+//Main
 int main(void) {
     stdio_init_all();
 
@@ -137,8 +137,7 @@ int main(void) {
         gpio_init(btn_pins[i]);
         gpio_set_dir(btn_pins[i], GPIO_IN);
         gpio_pull_up(btn_pins[i]);
-        // Registra o handler — o SDK do RP2040 aceita um único callback
-        // compartilhado para todos os pinos GPIO.
+        // Registra o handler
         gpio_set_irq_enabled_with_callback(btn_pins[i], GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     }
 
@@ -146,11 +145,11 @@ int main(void) {
     disp_update();
 
     while (true) {
-        // Joystick: navega (continua por polling — ADC não gera IRQ)
+        // Joystick: navega
         adc_select_input(1);
-        uint16_t v = adc_read();
-        if (v > 2400 || v < 1600) {
-            sel = (sel + (v > 2400 ? 1 : -1) + ABC_LEN) % ABC_LEN;
+        uint16_t eixo_y = adc_read();
+        if (eixo_y > 2400 || eixo_y < 1600) {
+            seletor = (seletor + (eixo_y > 2400 ? 1 : -1) + ABC_LEN) % ABC_LEN;
             disp_update();
             sleep_ms(180);
         }
@@ -159,7 +158,7 @@ int main(void) {
         if (ev_add) {
             ev_add = false;
             size_t l = strlen(msg);
-            if (l < MSG_MAX) { msg[l] = ABC[sel]; msg[l+1] = '\0'; }
+            if (l < MSG_MAX) { msg[l] = ABC[seletor]; msg[l+1] = '\0'; }
             disp_update();
         }
 
