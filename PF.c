@@ -9,7 +9,7 @@
 #include "audio.h"
 #include "ssd1306.h"
 
-// ── Pinos ─────────────────────────────────────────────────────────────────────
+// Pinos
 #define BTN_A    5
 #define BTN_B    6
 #define JOY_CLK  22
@@ -19,7 +19,7 @@
 #define SDA      14
 #define SCL      15
 
-// ── Constantes TX ─────────────────────────────────────────────────────────────
+// Constantes TX
 #define DOT_MS   80
 #define DASH_MS  240
 #define GAP_MS   80
@@ -32,19 +32,19 @@
 static const char ABC[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 #define ABC_LEN ((int)(sizeof(ABC) - 1))
 
-// ── Telas ─────────────────────────────────────────────────────────────────────
+// Telas
 typedef enum { SCREEN_MENU, SCREEN_TX,
                SCREEN_RX_IDLE, SCREEN_RX_REC, SCREEN_RX_RESULT } screen_t;
 static screen_t screen = SCREEN_MENU;
 
-// ── Estado ────────────────────────────────────────────────────────────────────
+// Estado
 static ssd1306_t disp;
 static char tx_msg[MSG_MAX+1]         = "";
 static int  sel                       = 0;
 static char rx_history[MSG_MAX+1]     = "";
 static char rx_current[MAX_SYMBOLS+1] = "";
 
-// ── Flags IRQ ─────────────────────────────────────────────────────────────────
+// Flags IRQ
 static volatile bool ev_a   = false;
 static volatile bool ev_b   = false;
 static volatile bool ev_clk = false;
@@ -58,7 +58,7 @@ static void gpio_irq_handler(uint gpio, uint32_t events) {
     if (gpio == JOY_CLK && now-tclk >= DBNC_MS) { tclk = now; ev_clk = true; }
 }
 
-// ── Joystick ──────────────────────────────────────────────────────────────────
+// Joystick
 static int joy_axis(uint ch) {
     adc_select_input(ch);
     uint16_t v = adc_read();
@@ -67,7 +67,7 @@ static int joy_axis(uint ch) {
     return 0;
 }
 
-// ── Display ───────────────────────────────────────────────────────────────────
+// Display
 static void disp_menu(int cur) {
     ssd1306_clear(&disp);
     ssd1306_draw_string(&disp, 0,  0, 1, "== MorseLink ==");
@@ -149,7 +149,7 @@ static void play(const char *s) {
     }
 }
 
-// ── RX helpers ────────────────────────────────────────────────────────────────
+// RX helpers
 static void rx_decode_and_flush(void) {
     const char *s = audio_current_symbols();
     uint8_t len = (uint8_t)strlen(s);
@@ -175,7 +175,7 @@ static void go_menu(int *cursor) {
     disp_menu(0);
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// Main
 int main(void) {
     stdio_init_all();
 
@@ -213,7 +213,7 @@ int main(void) {
 
     while (true) {
 
-        // ── MENU ──────────────────────────────────────────────────────
+        // MENU
         if (screen == SCREEN_MENU) {
             int dx = joy_axis(0);
             if (dx != 0 && joy_x_centered) {
@@ -230,7 +230,7 @@ int main(void) {
             ev_b = ev_clk = false;
         }
 
-        // ── TX ────────────────────────────────────────────────────────
+        // TX
         else if (screen == SCREEN_TX) {
             int dy = joy_axis(1);
             if (dy != 0) { sel = (sel + dy + ABC_LEN) % ABC_LEN; disp_tx(); sleep_ms(180); }
@@ -239,7 +239,7 @@ int main(void) {
             if (ev_b)  { ev_b  = false; go_menu(&menu_cursor); }
         }
 
-        // ── RX IDLE ───────────────────────────────────────────────────
+        // RX IDLE
         else if (screen == SCREEN_RX_IDLE) {
             if (ev_a) {
                 ev_a = false;
@@ -252,7 +252,7 @@ int main(void) {
             ev_clk = false;
         }
 
-        // ── RX GRAVANDO ───────────────────────────────────────────────
+        // RX GRAVANDO
         else if (screen == SCREEN_RX_REC) {
             audio_event_t aev = audio_process();
 
@@ -283,7 +283,7 @@ int main(void) {
             ev_a = ev_b = false;
         }
 
-        // ── RX RESULTADO ──────────────────────────────────────────────
+        // RX RESULTADO
         else if (screen == SCREEN_RX_RESULT) {
             if (ev_a) {
                 ev_a = false;
