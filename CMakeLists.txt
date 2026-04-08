@@ -68,6 +68,7 @@ target_sources(PF PRIVATE
     PF.c
     ssd1306.c
     morse_decoder.c
+    audio.c
 )
 
 pico_add_extra_outputs(PF)
