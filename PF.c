@@ -123,7 +123,7 @@ static void disp_rx_result(void) {
     ssd1306_show(&disp);
 }
 
-// ── Buzzer ────────────────────────────────────────────────────────────────────
+// Buzzer
 static uint pwm_slice, pwm_chan;
 
 static void buzz(bool on) {
