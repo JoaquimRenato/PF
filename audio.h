@@ -9,10 +9,10 @@
 #define AUDIO_THR_ON   80
 #define AUDIO_THR_OFF  40
 
-#define AUDIO_DOT_MAX  220
+#define AUDIO_DOT_MAX  240
 #define AUDIO_MIN_TONE  75
 
-#define AUDIO_CHAR_GAP  250
+#define AUDIO_CHAR_GAP  280
 #define AUDIO_WORD_GAP  1000
 
 // Confirmação de borda: quantas leituras consecutivas para aceitar ON ou OFF.
