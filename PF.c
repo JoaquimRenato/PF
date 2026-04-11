@@ -113,7 +113,7 @@ static int joy_axis(uint ch) {
 /* Tela do menu principal */
 static void disp_menu(int cur) {
     ssd1306_clear(&disp);
-    ssd1306_draw_string(&disp, 0,  0, 1, "== MorseLink ==");
+    ssd1306_draw_string(&disp, 0,  0, 1, "===== MorseLink =====");
     ssd1306_draw_string(&disp, 0, 20, 1, cur == 0 ? "> TRANSMISSOR" : "  TRANSMISSOR");
     ssd1306_draw_string(&disp, 0, 34, 1, cur == 1 ? "> RECEPTOR"    : "  RECEPTOR");
     ssd1306_draw_string(&disp, 0, 52, 1, "X) Mover   (A) Ok");
@@ -265,8 +265,9 @@ static void go_menu(int *cursor) {
 }
 
 int main(void) {
-    /* stdio_init_all() removido: travaria o boot sem conexão USB (bateria).
-     * Para depuração via USB, reabilite esta linha temporariamente. */
+    /* Inicializa UART para log serial (115200 baud, pinos padrão GP0/GP1).
+     * Não trava o boot pois USB stdio está desabilitado no CMakeLists. */
+    stdio_init_all();
 
     /* Display OLED via I2C1 */
     i2c_init(i2c1, 400000);
@@ -302,6 +303,13 @@ int main(void) {
 
     morse_decoder_init();
 
+    /* Log de inicialização */
+    printf("[BOOT] MorseLink iniciado\n");
+    printf("[BOOT] Buzzer: %d Hz\n", FREQ_HZ);
+    printf("[BOOT] Threshold mic: ON=%d OFF=%d\n", AUDIO_THR_ON, AUDIO_THR_OFF);
+    printf("[BOOT] Morse: dot_max=%dms char_gap=%dms word_gap=%dms\n",
+           AUDIO_DOT_MAX, AUDIO_CHAR_GAP, AUDIO_WORD_GAP);
+
     int  menu_cursor    = 0;
     bool joy_x_centered = true;
     disp_menu(0);
@@ -320,8 +328,15 @@ int main(void) {
 
             if (ev_a) {
                 ev_a = false;
-                if (menu_cursor == 0) { screen = SCREEN_TX;      disp_tx();      }
-                else                  { screen = SCREEN_RX_IDLE; disp_rx_idle(); }
+                if (menu_cursor == 0) {
+                    screen = SCREEN_TX;
+                    printf("[MENU] Modo: TRANSMISSOR\n");
+                    disp_tx();
+                } else {
+                    screen = SCREEN_RX_IDLE;
+                    printf("[MENU] Modo: RECEPTOR\n");
+                    disp_rx_idle();
+                }
             }
             ev_b = ev_clk = false;
         }
@@ -338,15 +353,20 @@ int main(void) {
             if (ev_a) {
                 ev_a = false;
                 size_t l = strlen(tx_msg);
-                if (l < MSG_MAX) { tx_msg[l] = ABC[sel]; tx_msg[l + 1] = '\0'; }
+                if (l < MSG_MAX) {
+                    tx_msg[l] = ABC[sel]; tx_msg[l + 1] = '\0';
+                    printf("[TX] Char adicionado: '%c' | MSG: %s\n", ABC[sel], tx_msg);
+                }
                 disp_tx();
             }
 
             if (ev_clk) {
                 ev_clk = false;
                 if (strlen(tx_msg) > 0) {
+                    printf("[TX] Enviando: %s\n", tx_msg);
                     play(tx_msg);
                     memset(tx_msg, 0, sizeof(tx_msg));
+                    printf("[TX] Enviado.\n");
                 }
                 disp_tx();
             }
@@ -361,6 +381,7 @@ int main(void) {
                 memset(rx_history, 0, sizeof(rx_history));
                 audio_reset();
                 screen = SCREEN_RX_REC;
+                printf("[RX] Gravacao iniciada\n");
                 disp_rx_rec();
             }
             if (ev_b) { ev_b = false; go_menu(&menu_cursor); }
@@ -385,6 +406,7 @@ int main(void) {
 
             if (aev == AUDIO_CHAR_READY) {
                 rx_decode_and_flush();
+                printf("[RX] Char: %s\n", rx_history);
                 disp_rx_rec();
             }
 
@@ -393,15 +415,16 @@ int main(void) {
                 size_t l = strlen(rx_history);
                 if (l > 0 && l < MSG_MAX && rx_history[l - 1] != ' ')
                     { rx_history[l] = ' '; rx_history[l + 1] = '\0'; }
+                printf("[RX] Palavra: %s\n", rx_history);
                 disp_rx_rec();
             }
 
             if (ev_clk) {
                 ev_clk = false;
-                rx_decode_and_flush(); /* Fecha qualquer char ainda em andamento */
-                /* Remove espaço no final, se houver */
+                rx_decode_and_flush();
                 size_t l = strlen(rx_history);
                 if (l > 0 && rx_history[l - 1] == ' ') rx_history[l - 1] = '\0';
+                printf("[RX] Gravacao parada | MSG: %s\n", rx_history);
                 screen = SCREEN_RX_RESULT;
                 disp_rx_result();
             }
