@@ -31,8 +31,8 @@
 #define BTN_A    5    /* Botão A */
 #define BTN_B    6    /* Botão B */
 #define JOY_CLK  22   /* Botão do joystick (OK) */
-#define JOY_X    26   /* Eixo X do joystick — ADC0 */
-#define JOY_Y    27   /* Eixo Y do joystick — ADC1 */
+#define JOY_Y    26   /* Eixo Y do joystick — ADC0 */
+#define JOY_X    27   /* Eixo X do joystick — ADC1 */
 #define BUZZER   21   /* Buzzer PWM */
 #define SDA      14   /* Display I2C — SDA */
 #define SCL      15   /* Display I2C — SCL */
@@ -116,7 +116,7 @@ static void disp_menu(int cur) {
     ssd1306_draw_string(&disp, 0,  0, 1, "===== MorseLink =====");
     ssd1306_draw_string(&disp, 0, 20, 1, cur == 0 ? "> TRANSMISSOR" : "  TRANSMISSOR");
     ssd1306_draw_string(&disp, 0, 34, 1, cur == 1 ? "> RECEPTOR"    : "  RECEPTOR");
-    ssd1306_draw_string(&disp, 0, 52, 1, "X) Mover   (A) Ok");
+    ssd1306_draw_string(&disp, 0, 52, 1, "(Y) Mover   (A) Ok");
     ssd1306_show(&disp);
 }
 
@@ -287,8 +287,8 @@ int main(void) {
 
     /* ADC para joystick (X e Y) e microfone (inicializado pela audio_init) */
     adc_init();
-    adc_gpio_init(JOY_X);
     adc_gpio_init(JOY_Y);
+    adc_gpio_init(JOY_X);
     audio_init();
 
     /* Botões: pull-up interno + IRQ por borda de descida */
@@ -389,10 +389,10 @@ int main(void) {
         }
 
         /* RX GRAVANDO: processa áudio continuamente.
-         * AUDIO_SYMBOL     → novo símbolo detectado, atualiza display.
-         * AUDIO_CHAR_READY → char completo, decodifica imediatamente.
-         * AUDIO_WORD_END   → fim de palavra, decodifica e insere espaço.
-         * (OK)             → para a gravação e exibe o resultado. */
+         * AUDIO_SYMBOL     - novo símbolo detectado, atualiza display.
+         * AUDIO_CHAR_READY - char completo, decodifica imediatamente.
+         * AUDIO_WORD_END   - fim de palavra, decodifica e insere espaço.
+         * (OK)             - para a gravação e exibe o resultado. */
         else if (screen == SCREEN_RX_REC) {
             audio_event_t aev = audio_process();
 
