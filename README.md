@@ -157,4 +157,4 @@ MIT License — livre para uso educacional e pessoal.
 
 ## Créditos
 
-Desenvolvido por **Joaquim** como Projeto Final do programa **EmbarcaTech Expansão** (2025).  
+Desenvolvido por **Joaquim** como Projeto Final do programa **EmbarcaTech Expansão** (2026).  
